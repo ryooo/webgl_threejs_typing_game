@@ -11,7 +11,7 @@
       this.frame = 0;
       this.map = [['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'], ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'], ['Z', 'X', 'C', 'V', 'B', 'N', 'M']];
       this.scene = new THREE.Scene();
-      this.scene.fog = new THREE.Fog(0x000000, 250, 1400);
+      this.scene.fog = new THREE.Fog(0x000000, 250, 2400);
       this.positions = {};
       this.all = [];
       _ref = this.map;
@@ -76,18 +76,26 @@
   })();
 
   Text = (function() {
-    var faceMaterial, geometoryConf, textMaterialFront, textMaterialSide;
+    var faceMaterial, geometoryConf, textHitMaterialFront, textHitMaterialSide, textMaterialFront, textMaterialSide;
 
     faceMaterial = new THREE.MeshFaceMaterial();
 
-    textMaterialFront = new THREE.MeshPhongMaterial({
-      color: 0xffffff,
-      shading: THREE.FlatShading
+    textMaterialFront = new THREE.MeshBasicMaterial({
+      color: 0x00ff00,
+      opacity: 1
     });
 
-    textMaterialSide = new THREE.MeshPhongMaterial({
-      color: 0xffffff,
-      shading: THREE.SmoothShading
+    textMaterialSide = new THREE.MeshBasicMaterial({
+      color: 0x33ff33
+    });
+
+    textHitMaterialFront = new THREE.MeshBasicMaterial({
+      color: 0xff0000,
+      opacity: 1
+    });
+
+    textHitMaterialSide = new THREE.MeshBasicMaterial({
+      color: 0xff3333
     });
 
     geometoryConf = {
@@ -113,9 +121,11 @@
       textGeo.computeVertexNormals();
       centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
       textMesh1 = new THREE.Mesh(textGeo, faceMaterial);
-      textMesh1.position.x = centerOffset + (x * 110) - 500;
-      textMesh1.position.y = 0;
-      textMesh1.position.z = z * 150;
+      textMesh1.position = {
+        x: centerOffset + (x * 110) - 500,
+        y: 0,
+        z: z * 150
+      };
       textMesh1.rotation.x = 0;
       textMesh1.rotation.y = Math.PI * 2;
       this.mesh = textMesh1;
@@ -129,20 +139,23 @@
       return this.tween = new TWEEN.Tween(this.mesh.position).to({
         y: to
       }, 1000).onComplete(function() {
-        _this.jumping = false;
         return new TWEEN.Tween(_this.mesh.position).to({
           y: 0
-        }, 1000).easing(TWEEN.Easing.Quintic.EaseOut).start();
+        }, 1000).onComplete(function() {
+          return _this.jumping = false;
+        }).easing(TWEEN.Easing.Quintic.EaseOut).start();
       }).easing(TWEEN.Easing.Quintic.EaseOut).start();
     };
 
     Text.prototype.hit = function() {
+      var _this = this;
       if (this.jumping) {
         this.jumping = false;
         window.pointAdd(this.char);
-        return this.tween = new TWEEN.Tween(this.mesh.rotation).to({
-          y: 0
-        }, 1000).easing(TWEEN.Easing.Linear.EaseNone).start();
+        this.mesh.geometry.materials = [textHitMaterialFront, textHitMaterialSide];
+        return setTimeout(function() {
+          return _this.mesh.geometry.materials = [textMaterialFront, textMaterialSide];
+        }, 500);
       }
     };
 
